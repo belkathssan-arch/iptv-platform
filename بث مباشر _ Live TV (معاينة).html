@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>بث مباشر | Live TV</title>
+<meta name="color-scheme" content="dark">
+<style>
+:root{color-scheme:dark;--ink:#05070f;--navy:#0b1226;--navy2:#121b36;--line:#1f2b4d;--text:#e8ecf8;--muted:#8d99ba;--blue:#2f6bff;--violet:#8b5cf6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(900px 420px at 90% -10%,rgba(139,92,246,.2),transparent 60%),radial-gradient(800px 420px at 0 0,rgba(47,107,255,.16),transparent 60%),var(--ink);color:var(--text);font-family:"IBM Plex Sans Arabic","Segoe UI",system-ui,-apple-system,"Noto Sans Arabic",Tahoma,sans-serif;min-height:100dvh}
+main{max-width:1100px;margin:0 auto;padding:16px 16px 56px}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:16px}
+h1{margin:0;margin-inline-end:auto;font-size:1.6rem;background:linear-gradient(90deg,var(--blue),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+input,select,button{font:inherit;color:inherit}
+input[type=search]{order:9;width:100%;background:var(--navy);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+@media(min-width:640px){input[type=search]{order:0;width:320px}}
+.btn,select{background:var(--navy2);border:1px solid var(--line);border-radius:10px;padding:7px 12px;font-size:.9rem;cursor:pointer}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.scroll{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:4px 0;margin-bottom:12px}
+.scroll::-webkit-scrollbar{display:none}
+.chip{background:var(--navy);border:1px solid var(--line);color:var(--muted);padding:6px 14px;border-radius:999px;white-space:nowrap;font-size:.875rem;cursor:pointer}
+.chip[aria-pressed=true]{background:linear-gradient(135deg,var(--blue),var(--violet));border-color:transparent;color:#fff}
+.notice{background:var(--navy);border:1px solid var(--line);border-inline-start:3px solid var(--violet);border-radius:10px;padding:10px 14px;font-size:.85rem;color:var(--muted);margin-bottom:16px;line-height:1.6}
+.player{margin-bottom:22px}
+.screen{position:relative;aspect-ratio:16/9;background:#000;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+video{width:100%;height:100%}
+.over{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.65);padding:24px;text-align:center;font-size:.9rem;line-height:1.7}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.bar .t{margin-inline-end:auto;min-width:0}
+.bar h2{margin:0;font-size:1.1rem}
+.bar p{margin:2px 0 0;color:var(--muted);font-size:.85rem}
+h3{margin:0 0 10px;font-size:1rem}
+.grid{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:640px){.grid{grid-template-columns:1fr 1fr}}
+@media(min-width:960px){.grid{grid-template-columns:1fr 1fr 1fr}}
+.card{display:flex;align-items:center;gap:12px;width:100%;text-align:start;background:var(--navy);border:1px solid var(--line);border-radius:14px;padding:12px;cursor:pointer}
+.card[aria-current=true]{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue),0 8px 28px rgba(47,107,255,.25)}
+.ph{display:grid;place-items:center;width:46px;height:46px;flex:none;border-radius:10px;background:var(--navy2);color:var(--muted);font-weight:700;font-size:1.1rem}
+.nm{display:block;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sub{display:block;font-size:.75rem;color:var(--muted)}
+.row{margin-bottom:24px}
+.row .scroll .card{width:240px;flex:none}
+.empty{border:1px dashed var(--line);border-radius:16px;padding:24px;text-align:center;color:var(--muted);margin-bottom:22px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1 id="title"></h1>
+<input type="search" id="q">
+<select id="lang" aria-label="Language"><option value="ar">العربية</option><option value="fr">Français</option><option value="en">English</option></select>
+</header>
+<div class="notice" id="notice"></div>
+<div id="player"></div>
+<div class="scroll" id="regions" role="group"></div>
+<div id="favs"></div>
+<div id="hist"></div>
+<h3 id="chh"></h3>
+<div class="grid" id="list"></div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.20/hls.min.js"></script>
+<script>
+const CH=[{"name": "2M", "quality": "576p", "country": "MA", "url": "http://185.9.2.18/chid_218/index.m3u8"}, {"name": "2M Monde", "quality": "360p", "country": "MA", "url": "https://cdn-globecast.akamaized.net/live/eds/2m_monde/hls_video_ts_tuhawxpiemz257adfc/2m_monde.m3u8"}, {"name": "2M Monde +1", "quality": "1080p", "country": "MA", "url": "https://d2qh3gh0k5vp3v.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-n6pess5lwbghr/2M_ES.m3u8"}, {"name": "Al Maghribia", "quality": "1080p", "country": "MA", "url": "http://185.9.2.18/chid_205/index.m3u8"}, {"name": "Arryadia", "quality": "720p", "country": "MA", "url": "http://149.100.11.252:8000/play/a065/index.m3u8"}, {"name": "Chada TV", "quality": "720p", "country": "MA", "url": "https://edge13.vedge.infomaniak.com/livecast/ik:chadatv/manifest.m3u8"}, {"name": "Chada TV", "quality": "720p", "country": "MA", "url": "https://edge19.vedge.infomaniak.com/livecast/ik:chadatv/playlist.m3u8"}, {"name": "Medi1TV Afrique", "quality": "1080p", "country": "MA", "url": "https://cdn.live.easybroadcast.io/abr_corp/83_medi1tv-afrique_tm7tu45/playlist.m3u8"}, {"name": "Medi1TV Afrique (1080p) (DVR)", "quality": "1080p", "country": "MA", "url": "https://cdn.live.easybroadcast.io/abr_corp/83_medi1tv-afrique_tm7tu45/playlist_dvr.m3u8"}, {"name": "Medi 1 TV Arabic", "quality": "1080p", "country": "MA", "url": "https://cdn.live.easybroadcast.io/abr_corp/83_medi1tv-arabic_g90v4ec/playlist.m3u8"}, {"name": "Medi 1 TV Arabic (1080p) (DVR)", "quality": "1080p", "country": "MA", "url": "https://cdn.live.easybroadcast.io/abr_corp/83_medi1tv-arabic_g90v4ec/playlist_dvr.m3u8"}, {"name": "Medi 1 TV Maghreb", "quality": "1080p", "country": "MA", "url": "https://cdn.live.easybroadcast.io/abr_corp/83_medi1tv-maghreb_jnbspmg/playlist.m3u8"}, {"name": "Medi 1 TV Maghreb (1080p) (DVR)", "quality": "1080p", "country": "MA", "url": "https://cdn.live.easybroadcast.io/abr_corp/83_medi1tv-maghreb_jnbspmg/playlist_dvr.m3u8"}, {"name": "StoryChannel TV", "quality": "720p", "country": "MA", "url": "https://136044159.r.cdnsun.net/storychannel.m3u8"}];
+const T={
+ar:{app:"بث مباشر",search:"ابحث عن قناة…",all:"الكل",fav:"المفضلة",recent:"شوهدت مؤخراً",ch:"القنوات",none:"لا توجد قنوات مطابقة. جرّب كلمة أخرى.",empty:"اختر قناة لبدء المشاهدة.",addf:"أضف إلى المفضلة",remf:"أزل من المفضلة",prev:"السابقة",next:"التالية",
+preview:"هذه معاينة للواجهة فقط. التشغيل الفعلي للبث يحتاج نشر المشروع على خادم (يعمل فيه الوسيط والفحص)، فالصفحات المستضافة هنا لا يُسمح لها بالاتصال بخوادم القنوات.",
+connecting:"جارٍ الاتصال…",failed:"لا يمكن تشغيل البث داخل المعاينة. انشر المشروع على خادم ليعمل.",clear:"مسح السجل",cnt:"قناة",morocco:"المغرب"},
+fr:{app:"TV en direct",search:"Rechercher une chaîne…",all:"Toutes",fav:"Favoris",recent:"Vues récemment",ch:"Chaînes",none:"Aucune chaîne trouvée.",empty:"Choisissez une chaîne pour commencer.",addf:"Ajouter aux favoris",remf:"Retirer des favoris",prev:"Précédente",next:"Suivante",
+preview:"Ceci est un aperçu de l’interface. La lecture réelle demande un déploiement sur un serveur (proxy et vérification des flux) : les pages hébergées ici ne peuvent pas contacter les serveurs des chaînes.",
+connecting:"Connexion…",failed:"Lecture impossible dans l’aperçu. Déployez le projet sur un serveur.",clear:"Effacer l’historique",cnt:"chaînes",morocco:"Maroc"},
+en:{app:"Live TV",search:"Search channels…",all:"All",fav:"Favorites",recent:"Recently watched",ch:"Channels",none:"No matching channels. Try another word.",empty:"Pick a channel to start watching.",addf:"Add to favorites",remf:"Remove from favorites",prev:"Previous",next:"Next",
+preview:"This is an interface preview only. Real playback needs the project deployed on a server (proxy and stream checks): pages hosted here can’t contact channel servers.",
+connecting:"Connecting…",failed:"Can’t play streams inside the preview. Deploy the project to a server.",clear:"Clear history",cnt:"channels",morocco:"Morocco"}};
+const $=id=>document.getElementById(id);
+const ld=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let lang=ld("lang","ar"),q="",cur=null,favs=ld("favs",[]),hist=ld("hist",[]),hls=null;
+const t=()=>T[lang];
+const flag=cc=>String.fromCodePoint(...[...cc].map(c=>127397+c.charCodeAt(0)));
+const card=(c,i)=>`<button class="card" data-i="${i}" aria-current="${i===cur}"><span class="ph">${esc(c.name.slice(0,1))}</span><span style="min-width:0"><span class="nm">${esc(c.name)}</span><span class="sub">${flag(c.country)} ${c.country}${c.quality?" · "+c.quality:""}</span></span></button>`;
+function rowHtml(title,ids,extra){const it=ids.filter(i=>CH[i]);if(!it.length)return"";return `<section class="row"><h3>${title} ${extra||""}</h3><div class="scroll">${it.map(i=>card(CH[i],i)).join("")}</div></section>`}
+function stop(){if(hls){hls.destroy();hls=null}}
+function play(i){
+ cur=i;hist=[i,...hist.filter(x=>x!==i)].slice(0,30);sv("hist",hist);render();
+ const v=$("vid"),ov=$("ov");stop();
+ const fail=()=>{ov.hidden=false;ov.textContent=t().failed};
+ if(window.Hls&&Hls.isSupported()){hls=new Hls();hls.on(Hls.Events.FRAG_LOADED,()=>{ov.hidden=true});hls.on(Hls.Events.ERROR,(e,d)=>{if(d.fatal){stop();fail()}});hls.loadSource(CH[i].url);hls.attachMedia(v);v.play().catch(()=>{})}
+ else fail();
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+function step(d){const l=filtered();if(!l.length)return;const k=l.indexOf(cur);play(l[(k+d+l.length)%l.length])}
+function filtered(){const n=q.trim().toLowerCase();return CH.map((c,i)=>i).filter(i=>!n||CH[i].name.toLowerCase().includes(n))}
+function render(){
+ const L=t();document.documentElement.lang=lang;document.documentElement.dir=lang==="ar"?"rtl":"ltr";
+ $("title").textContent=L.app;$("q").placeholder=L.search;$("q").setAttribute("aria-label",L.search);$("notice").textContent=L.preview;$("lang").value=lang;
+ $("regions").innerHTML=`<button class="chip" aria-pressed="true">${L.morocco}</button>`;
+ const keep=$("player").firstElementChild&&cur!==null&&$("player").dataset.cur==String(cur);
+ if(!keep){
+  if(cur===null)$("player").innerHTML=`<p class="empty">${L.empty}</p>`;
+  else{const c=CH[cur],f=favs.includes(cur);$("player").dataset.cur=cur;
+   $("player").innerHTML=`<section class="player"><div class="screen"><video id="vid" controls playsinline autoplay></video><div class="over" id="ov">${L.connecting}</div></div><div class="bar"><div class="t"><h2>${esc(c.name)}</h2><p>${flag(c.country)} ${c.country}${c.quality?" · "+c.quality:""}</p></div><button class="btn" id="pv">${L.prev}</button><button class="btn" id="nx">${L.next}</button><button class="btn" id="fv">${f?"★ "+L.remf:"☆ "+L.addf}</button></div></section>`;
+   $("pv").onclick=()=>step(-1);$("nx").onclick=()=>step(1);
+   $("fv").onclick=()=>{favs=favs.includes(cur)?favs.filter(x=>x!==cur):[cur,...favs];sv("favs",favs);const b=$("fv");b.textContent=(favs.includes(cur)?"★ "+L.remf:"☆ "+L.addf)};}
+ }
+ $("favs").innerHTML=rowHtml("★ "+L.fav,favs);
+ $("hist").innerHTML=rowHtml(L.recent,hist.slice(0,12),`<button class="btn" id="clr" style="font-size:.75rem;padding:3px 10px">${L.clear}</button>`);
+ const clr=$("clr");if(clr)clr.onclick=()=>{hist=[];sv("hist",[]);render()};
+ const l=filtered();$("chh").textContent=`${L.ch} (${l.length} ${L.cnt})`;
+ $("list").innerHTML=l.length?l.map(i=>card(CH[i],i)).join(""):`<p style="color:var(--muted)">${L.none}</p>`;
+}
+document.addEventListener("click",e=>{const b=e.target.closest(".card");if(b)play(Number(b.dataset.i))});
+$("q").addEventListener("input",e=>{q=e.target.value;render()});
+$("lang").addEventListener("change",e=>{lang=e.target.value;sv("lang",lang);$("player").dataset.cur="";render();});
+render();
+</script>
+</body>
+</html>
